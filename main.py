@@ -1,4 +1,4 @@
-from example2 import ChopperScape
+from chopper import ChopperScape
 
 env = ChopperScape()
 obs = env.reset()

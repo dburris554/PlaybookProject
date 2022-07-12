@@ -10,6 +10,8 @@ import time
 
 font = cv2.FONT_HERSHEY_COMPLEX_SMALL
 
+# This environment is based on the ChopperScape environment from this paper:
+# https://blog.paperspace.com/creating-custom-environments-openai-gym/
 class ChopperScape(Env):
     def __init__(self):
         super(ChopperScape, self).__init__()
