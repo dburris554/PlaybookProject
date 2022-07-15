@@ -1,6 +1,6 @@
-from chopper import ChopperScape
+from chopper import MissileEnv
 
-env = ChopperScape()
+env = MissileEnv(formation=MissileEnv.formations[0])
 obs = env.reset()
 
 while True:
