@@ -1,6 +1,6 @@
 from colloseum import MissileEnv
 
-env = MissileEnv(formation=MissileEnv.formations[0], fps=60)
+env = MissileEnv(formation=MissileEnv.formations[1], fps=60)
 obs = env.reset()
 
 while True:
@@ -9,6 +9,7 @@ while True:
     env.render()
 
     if done:
+        data = info["data"]
         break
 
 env.close()
