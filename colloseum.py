@@ -303,7 +303,7 @@ class Point(object): #TODO May not need it or parts of it
 class Missile(Point):
     def __init__(self, name, x_max, x_min, y_max, y_min):
         super(Missile, self).__init__(name, x_max, x_min, y_max, y_min)
-        self.icon = cv2.imread('chopper.png') / 255.0
+        self.icon = cv2.imread('Missile.png') / 255.0
         self.icon_w = 64
         self.icon_h = 64
         self.icon = cv2.resize(self.icon, (self.icon_h, self.icon_w))
@@ -311,7 +311,7 @@ class Missile(Point):
 class Turret(Point):
     def __init__(self, name, x_max, x_min, y_max, y_min):
         super(Turret, self).__init__(name, x_max, x_min, y_max, y_min)
-        self.icon = cv2.imread("bird.png") / 255.0
+        self.icon = cv2.imread("Turret.png") / 255.0
         self.icon_w = 64
         self.icon_h = 64
         self.icon = cv2.resize(self.icon, (self.icon_h, self.icon_w))
