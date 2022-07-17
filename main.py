@@ -1,6 +1,6 @@
-from chopper import MissileEnv
+from colloseum import MissileEnv
 
-env = MissileEnv(formation=MissileEnv.formations[0])
+env = MissileEnv(formation=MissileEnv.formations[0], fps=30)
 obs = env.reset()
 
 while True:

@@ -1,12 +1,8 @@
 import numpy as np 
-import cv2 
-import matplotlib.pyplot as plt
-import PIL.Image as Image
-import gym
+import cv2
 import random
 
 from gym import Env, spaces
-import time
 
 font = cv2.FONT_HERSHEY_COMPLEX_SMALL
 
@@ -15,10 +11,10 @@ font = cv2.FONT_HERSHEY_COMPLEX_SMALL
 class MissileEnv(Env):
     formations = ["V-formation", "Ant-trail"]
 
-    def __init__(self, fps : int = 10, formation : str | None = None):
+    def __init__(self, fps : int = 20, formation : str | None = None):
         super(MissileEnv, self).__init__()
         # Define metadata
-        self.metadata = {"render_modes" : ["human", "rgb_array"], "render_fps" : fps} # TODO Use fps somewhere
+        self.metadata = {"render_modes" : ["human", "rgb_array"], "render_fps" : fps}
         self.formation = formation
         # Define a 2-D observation space
         self.observation_shape = (600, 800, 3)
