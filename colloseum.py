@@ -11,11 +11,12 @@ font = cv2.FONT_HERSHEY_COMPLEX_SMALL
 class MissileEnv(Env):
     formations = ["V-formation", "Ant-trail"]
 
-    def __init__(self, fps : int = 20, formation : str | None = None):
+    def __init__(self, fps : int = 30, formation : str | None = None, ep_count : int = 5):
         super(MissileEnv, self).__init__()
         # Define metadata
-        self.metadata = {"render_modes" : ["human", "rgb_array"], "render_fps" : fps}
+        self.metadata = {"render_modes" : ["human", "rgb_array"], "render_fps" : fps, "tot_episodes" : ep_count}
         self.formation = formation
+        self.episode = 1
         # Define a 2-D observation space
         self.observation_shape = (600, 800, 3)
         self.observation_space = spaces.Box(
@@ -34,13 +35,13 @@ class MissileEnv(Env):
         self.max_fuel = 1000
 
         # TODO
-        self.target = None
-        self.state = [{}, None, None] # current coodinate, distance to target, movement distance as heading Left(2,3), right(2,-3)
+        self.target = None # TODO add target zone object
+        self.state = [{}, None, None] # current coodinates, distance to target, movement distance as heading Left(2,3), right(2,-3)
 
         # Chopper boundaries
-        self.y_min = int(self.observation_shape[0] * 0.1)
+        self.y_min = 0
         self.x_min = 0
-        self.y_max = int(self.observation_shape[0] * 0.9)
+        self.y_max = self.observation_shape[0]
         self.x_max = self.observation_shape[1]
 
         if formation and formation in self.formations:
@@ -57,7 +58,7 @@ class MissileEnv(Env):
             self.canvas[y : y + elem_shape[1], x : x + elem_shape[0]] = elem.icon
 
         # TODO remove or edit text
-        text = f'Fuel Left: {self.fuel_left} | Rewards: {self.ep_return}'
+        text = f'Episode: {self.episode} | Missiles Left: {len(self.state[0])}'
 
         # Put text on canvas  TODO remove or edit
         self.canvas = cv2.putText(self.canvas, text, (10, 20), font, 0.8, (0,0,0), 1, cv2.LINE_AA)
@@ -77,8 +78,8 @@ class MissileEnv(Env):
         if hasattr(self, "autorun"):
             if self.formation == "V-formation":
                 # Initial formation location
-                x = int(self.observation_shape[0] * 0.2)
-                y = int(self.observation_shape[1] * 0.5)
+                x = int(self.observation_shape[1] * 0.2)
+                y = int(self.observation_shape[0] * 0.5)
 
                 # Initialize the missiles
                 missiles = [Missile("Missile_1", self.x_max, self.x_min, self.y_max, self.y_min),
@@ -92,20 +93,20 @@ class MissileEnv(Env):
             self.turret_count += 1 #TODO set amount of turrents
 
             # Spawn a turret in a random location on the right-half of the screen
-            turret_x = int(self.observation_shape[0] * 0.65)
-            turret_y = int(self.observation_shape[1] * 0.5)
+            turret_x = int(self.observation_shape[1] * 0.65)
+            turret_y = int(self.observation_shape[0] * 0.5)
             spawned_turret.set_position(turret_x, turret_y)
             
             # Append the spawned turret to the elements currently present in Env. 
             self.elements.append(spawned_turret)
         else:
             # Initial missile locations # FIXME Make sure missiles spawn in different places
-            x1 = random.randrange(int(self.observation_shape[0] * 0.05), int(self.observation_shape[0] * 0.2))
-            y1 = random.randrange(int(self.observation_shape[1] * 0.05), int(self.observation_shape[1] * 0.95))
-            x2 = random.randrange(int(self.observation_shape[0] * 0.05), int(self.observation_shape[0] * 0.2))
-            y2 = random.randrange(int(self.observation_shape[1] * 0.05), int(self.observation_shape[1] * 0.95))
-            x3 = random.randrange(int(self.observation_shape[0] * 0.05), int(self.observation_shape[0] * 0.2))
-            y3 = random.randrange(int(self.observation_shape[1] * 0.05), int(self.observation_shape[1] * 0.95))
+            x1 = random.randrange(int(self.observation_shape[1] * 0.05), int(self.observation_shape[1] * 0.2))
+            y1 = random.randrange(int(self.observation_shape[0] * 0.05), int(self.observation_shape[0] * 0.95))
+            x2 = random.randrange(int(self.observation_shape[1] * 0.05), int(self.observation_shape[1] * 0.2))
+            y2 = random.randrange(int(self.observation_shape[0] * 0.05), int(self.observation_shape[0] * 0.95))
+            x3 = random.randrange(int(self.observation_shape[1] * 0.05), int(self.observation_shape[1] * 0.2))
+            y3 = random.randrange(int(self.observation_shape[0] * 0.05), int(self.observation_shape[0] * 0.95))
 
             # Initialize the missiles
             missiles = [Missile("Missile_1", self.x_max, self.x_min, self.y_max, self.y_min),
@@ -234,6 +235,8 @@ class MissileEnv(Env):
         # Flag that marks the termination of an episode
         done = False
 
+        reward = 0
+
         [missile.move(5,0) for missile in self.missiles if missile in self.elements]
 
         for elem in self.elements:
@@ -260,11 +263,14 @@ class MissileEnv(Env):
 
         # If all missiles are destroyed or reach the end of the screen, end the episode
         if len([elem for elem in self.elements if isinstance(elem, Missile)]) == 0:
-            done = True
-        
-        reward = 0
+            # If episode count is fulfilled, set done to True, else reset
+            self.episode += 1
+            if self.episode > self.metadata["tot_episodes"]:
+                done = True
+            else:
+                self.reset()
 
-        return self.canvas, reward, done, {"episode": ""}
+        return self.canvas, reward, done, {"episode": "", "state": self.state}
     
 class Point(object): #TODO May not need it or parts of it
     def __init__(self, name, x_max, x_min, y_max, y_min):
@@ -306,6 +312,6 @@ class Turret(Point):
     def __init__(self, name, x_max, x_min, y_max, y_min):
         super(Turret, self).__init__(name, x_max, x_min, y_max, y_min)
         self.icon = cv2.imread("bird.png") / 255.0
-        self.icon_w = 32
-        self.icon_h = 32
+        self.icon_w = 64
+        self.icon_h = 64
         self.icon = cv2.resize(self.icon, (self.icon_h, self.icon_w))

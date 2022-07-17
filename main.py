@@ -1,11 +1,11 @@
 from colloseum import MissileEnv
 
-env = MissileEnv(formation=MissileEnv.formations[0], fps=30)
+env = MissileEnv(formation=MissileEnv.formations[0], fps=60)
 obs = env.reset()
 
 while True:
     action = env.action_space.sample()
-    obs, reward, done, _ = env.step(action)
+    obs, reward, done, info = env.step(action)
     env.render()
 
     if done:
