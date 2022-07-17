@@ -78,7 +78,7 @@ class MissileEnv(Env):
 
         self.elements = []
 
-        if self.autorun:
+        if hasattr(self, "autorun"):
             if self.formation == "V-formation":
                 # Initial formation location
                 x = int(self.observation_shape[0] * 0.2)
@@ -169,7 +169,7 @@ class MissileEnv(Env):
         return False
     
     def step(self, action):
-        if self.autorun:
+        if hasattr(self, "autorun"):
             return self.autostep()
 
         # Flag that marks the termination of an episode
