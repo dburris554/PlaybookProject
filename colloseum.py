@@ -76,11 +76,10 @@ class MissileEnv(Env):
         self.elements = []
 
         if hasattr(self, "autorun"):
+            # Initial formation location
+            x = int(self.observation_shape[1] * 0.2)
+            y = int(self.observation_shape[0] * 0.5)
             if self.formation == "V-formation":
-                # Initial formation location
-                x = int(self.observation_shape[1] * 0.2)
-                y = int(self.observation_shape[0] * 0.5)
-
                 # Initialize the missiles
                 missiles = [Missile("Missile_1", self.x_max, self.x_min, self.y_max, self.y_min),
                             Missile("Missile_2", self.x_max, self.x_min, self.y_max, self.y_min),
@@ -88,11 +87,20 @@ class MissileEnv(Env):
                 missiles[0].set_position(x, y - 75)
                 missiles[1].set_position(x + 100, y)
                 missiles[2].set_position(x, y + 75)
+            elif self.formation == "Ant-trail":
+                 # Initialize the missiles
+                missiles = [Missile("Missile_1", self.x_max, self.x_min, self.y_max, self.y_min),
+                            Missile("Missile_2", self.x_max, self.x_min, self.y_max, self.y_min),
+                            Missile("Missile_3", self.x_max, self.x_min, self.y_max, self.y_min)]
+                missiles[0].set_position(x - 75, y)
+                missiles[1].set_position(x, y)
+                missiles[2].set_position(x + 75, y)
+
             # Spawn a turret
             spawned_turret = Turret(f"turret_{self.turret_count}", self.x_max, self.x_min, self.y_max, self.y_min)
 
             # Spawn a turret in a random location on the right-half of the screen
-            turret_x = random.randrange(int(self.observation_shape[1] * 0.65), int(self.observation_shape[1]))
+            turret_x = random.randrange(int(self.observation_shape[1] * 0.50), int(self.observation_shape[1]))
             turret_y = random.randrange(0, int(self.observation_shape[0]))
             spawned_turret.set_position(turret_x, turret_y)
             
@@ -251,6 +259,9 @@ class MissileEnv(Env):
         # Missile states
         self.state[0] = {missile.name : missile.get_position() for missile in self.missiles if missile in self.elements}
 
+        # Define default info object
+        info = {"episode": "", "state": self.state}
+
         # Draw elements on the canvas
         self.draw_elements_on_canvas()
 
@@ -267,10 +278,12 @@ class MissileEnv(Env):
             self.episode += 1
             if self.episode > self.metadata["tot_episodes"]:
                 done = True
+                # Add data to info object
+                info["data"] = None # FIXME add pandas dataframe
             else:
                 self.reset()
 
-        return self.canvas, reward, done, {"episode": "", "state": self.state}
+        return self.canvas, reward, done, info
     
 class Point(object): #TODO May not need it or parts of it
     def __init__(self, name, x_max, x_min, y_max, y_min):
