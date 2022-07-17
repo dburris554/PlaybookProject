@@ -89,12 +89,11 @@ class MissileEnv(Env):
                 missiles[1].set_position(x + 100, y)
                 missiles[2].set_position(x, y + 75)
             # Spawn a turret
-            spawned_turret = Turret(f"turret_{self.turret_count + 1}", self.x_max, self.x_min, self.y_max, self.y_min)
-            self.turret_count += 1 #TODO set amount of turrents
+            spawned_turret = Turret(f"turret_{self.turret_count}", self.x_max, self.x_min, self.y_max, self.y_min)
 
             # Spawn a turret in a random location on the right-half of the screen
-            turret_x = int(self.observation_shape[1] * 0.65)
-            turret_y = int(self.observation_shape[0] * 0.5)
+            turret_x = random.randrange(int(self.observation_shape[1] * 0.65), int(self.observation_shape[1]))
+            turret_y = random.randrange(0, int(self.observation_shape[0]))
             spawned_turret.set_position(turret_x, turret_y)
             
             # Append the spawned turret to the elements currently present in Env. 
@@ -257,9 +256,10 @@ class MissileEnv(Env):
 
         # if missiles reach end of screen, end the episode
         for missile in self.missiles:
-            if missile.get_position()[0] + missile.icon_w >= self.x_max:
-                # TODO add Missile survived logic
-                self.elements.remove(missile)
+            if missile in self.elements:
+                if missile.get_position()[0] + missile.icon_w >= self.x_max:
+                    # TODO add Missile survived logic
+                    self.elements.remove(missile)
 
         # If all missiles are destroyed or reach the end of the screen, end the episode
         if len([elem for elem in self.elements if isinstance(elem, Missile)]) == 0:
