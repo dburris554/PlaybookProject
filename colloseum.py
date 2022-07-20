@@ -55,7 +55,7 @@ class MissileEnv(Env):
         for elem in self.elements:
             elem_shape = elem.icon.shape
             x,y = elem.x, elem.y
-            self.canvas[y : y + elem_shape[1], x : x + elem_shape[0]] = elem.icon
+            self.canvas[y : y + elem_shape[0], x : x + elem_shape[1]] = elem.icon
 
         # TODO remove or edit text
         text = f'Episode: {self.episode} | Missiles Left: {len(self.state[0])}'
@@ -317,9 +317,9 @@ class Missile(Point):
     def __init__(self, name, x_max, x_min, y_max, y_min):
         super(Missile, self).__init__(name, x_max, x_min, y_max, y_min)
         self.icon = cv2.imread('Missile.png') / 255.0
-        self.icon_w = 64
-        self.icon_h = 64
-        self.icon = cv2.resize(self.icon, (self.icon_h, self.icon_w))
+        self.icon_w = 60
+        self.icon_h = 12
+        self.icon = cv2.resize(self.icon, (self.icon_w, self.icon_h))
 
 class Turret(Point):
     def __init__(self, name, x_max, x_min, y_max, y_min):
@@ -327,4 +327,4 @@ class Turret(Point):
         self.icon = cv2.imread("Turret.png") / 255.0
         self.icon_w = 64
         self.icon_h = 64
-        self.icon = cv2.resize(self.icon, (self.icon_h, self.icon_w))
+        self.icon = cv2.resize(self.icon, (self.icon_w, self.icon_h))
