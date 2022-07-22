@@ -1,6 +1,6 @@
-from colosseum import MissileEnv
+from colosseum import FormationEnv
 
-env = MissileEnv(formation=MissileEnv.formations[1], fps=60)
+env = FormationEnv(formation=FormationEnv.formations[1], fps=60)
 obs = env.reset()
 
 while True:
