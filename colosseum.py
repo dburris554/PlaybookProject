@@ -1,9 +1,11 @@
 import numpy as np 
 import cv2
 import random
+import pandas as pd
 
 from gym import Env, spaces
 from components import Missile, Turret
+from formations import Basic_Formation, V_formation, Ant_trail
 
 font = cv2.FONT_HERSHEY_COMPLEX_SMALL
 
@@ -12,11 +14,10 @@ font = cv2.FONT_HERSHEY_COMPLEX_SMALL
 class FormationEnv(Env):
     formations = ["V-formation", "Ant-trail"]
 
-    def __init__(self, fps : int = 30, formation : str | None = "V-formation", ep_count : int = 5):
+    def __init__(self, fps : int = 30, formation : Basic_Formation = V_formation, ep_count : int = 5):
         super(FormationEnv, self).__init__()
         # Define metadata
         self.metadata = {"render_modes" : ["human", "rgb_array"], "render_fps" : fps, "tot_episodes" : ep_count}
-        self.formation = formation
         self.episode = 1
         # Define a 2-D observation space
         self.observation_shape = (600, 800, 3)
@@ -40,6 +41,12 @@ class FormationEnv(Env):
         self.x_min = 0
         self.y_max = self.observation_shape[0]
         self.x_max = self.observation_shape[1]
+
+        # Initialize formation
+        self.formation = formation()
+
+        # Intialize 2d list for data
+        self.data = [[]]
     
     def draw_elements_on_canvas(self):
         # Init the canvas
@@ -63,22 +70,6 @@ class FormationEnv(Env):
         # Initial formation location
         x = int(self.observation_shape[1] * 0.2)
         y = int(self.observation_shape[0] * 0.5)
-        if self.formation == "V-formation":
-            # Initialize the missiles
-            missiles = [Missile("Missile_1", self.x_max, self.x_min, self.y_max, self.y_min),
-                        Missile("Missile_2", self.x_max, self.x_min, self.y_max, self.y_min),
-                        Missile("Missile_3", self.x_max, self.x_min, self.y_max, self.y_min)]
-            missiles[0].set_position(x, y - 75)
-            missiles[1].set_position(x + 100, y)
-            missiles[2].set_position(x, y + 75)
-        elif self.formation == "Ant-trail":
-                # Initialize the missiles
-            missiles = [Missile("Missile_1", self.x_max, self.x_min, self.y_max, self.y_min),
-                        Missile("Missile_2", self.x_max, self.x_min, self.y_max, self.y_min),
-                        Missile("Missile_3", self.x_max, self.x_min, self.y_max, self.y_min)]
-            missiles[0].set_position(x - 75, y)
-            missiles[1].set_position(x, y)
-            missiles[2].set_position(x + 75, y)
 
         # Initialize turret
         spawned_turret = Turret(f"turret_{self.turret_count}", self.x_max, self.x_min, self.y_max, self.y_min)
@@ -92,11 +83,10 @@ class FormationEnv(Env):
         self.elements.append(spawned_turret)
         
         # Store the elements
-        self.missiles = missiles
-        self.elements += self.missiles
+        self.elements += self.formation.get_missiles()
 
         # Missile states
-        self.state[0] = {missile.name : missile.get_position() for missile in self.missiles}
+        self.state[0] = {missile.name : missile.get_position() for missile in self.formation.get_missiles()}
 
         # Reset the canvas
         self.canvas = np.ones(self.observation_shape, dtype=np.float32) * 1
@@ -174,6 +164,7 @@ class FormationEnv(Env):
                     self.elements.remove(missile)
 
         info = {"episode": self.episode, "state": self.state}
+        self.data += [] # TODO put data row here
 
         # If all missiles are destroyed or reach the end of the screen, end the episode
         if len([elem for elem in self.elements if isinstance(elem, Missile)]) == 0:
@@ -184,7 +175,7 @@ class FormationEnv(Env):
             if self.episode > self.metadata["tot_episodes"]:
                 done = True
                 # Add data to info object
-                info["data"] = None # FIXME add pandas dataframe
+                info["data"] = pd.DataFrame(data=self.data, columns=['Missile Count', 'Formation Used', 'Turrent Count','Missiles Survive'],dtype=int)
             else:
                 self.reset()
 

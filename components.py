@@ -34,6 +34,10 @@ class Missile(Point):
         self.icon_w = 64
         self.icon_h = 64
         self.icon = cv2.resize(self.icon, (self.icon_h, self.icon_w))
+        self.alive = True
+
+    def kill(self):
+        self.alive = False
 
 class Turret(Point):
     def __init__(self, name, x_max, x_min, y_max, y_min):
