@@ -29,11 +29,11 @@ class Point(object):
 
 class Missile(Point):
     def __init__(self, name, x_max, x_min, y_max, y_min):
-        super(Missile, self).__init__(name, x_max, x_min, y_max, y_min)
+        super().__init__(name, x_max, x_min, y_max, y_min)
         self.icon = cv2.imread('Missile.png') / 255.0
         self.icon_w = 64
-        self.icon_h = 64
-        self.icon = cv2.resize(self.icon, (self.icon_h, self.icon_w))
+        self.icon_h = 12
+        self.icon = cv2.resize(self.icon, (self.icon_w, self.icon_h))
         self.alive = True
 
     def kill(self):
@@ -41,8 +41,8 @@ class Missile(Point):
 
 class Turret(Point):
     def __init__(self, name, x_max, x_min, y_max, y_min):
-        super(Turret, self).__init__(name, x_max, x_min, y_max, y_min)
+        super().__init__(name, x_max, x_min, y_max, y_min)
         self.icon = cv2.imread("Turret.png") / 255.0
         self.icon_w = 64
         self.icon_h = 64
-        self.icon = cv2.resize(self.icon, (self.icon_h, self.icon_w))
+        self.icon = cv2.resize(self.icon, (self.icon_w, self.icon_h))
