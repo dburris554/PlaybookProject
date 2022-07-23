@@ -1,21 +1,22 @@
 from colosseum import FormationEnv
 
-env = FormationEnv(formation=FormationEnv.formations[1], fps=60)
+env = FormationEnv()
 obs = env.reset()
 
 while True:
-    action = env.action_space.sample()
+    action = 0
     obs, reward, done, info = env.step(action)
     env.render()
 
     if done:
         data = info["data"]
+        print(data)
         break
 
 env.close()
 
-from stable_baselines3 import PPO
-from stable_baselines3.ppo import MlpPolicy
+# from stable_baselines3 import PPO
+# from stable_baselines3.ppo import MlpPolicy
 
 # import gym
 

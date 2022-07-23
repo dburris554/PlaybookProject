@@ -12,53 +12,52 @@ font = cv2.FONT_HERSHEY_COMPLEX_SMALL
 # This environment is based on the ChopperScape environment from this paper:
 # https://blog.paperspace.com/creating-custom-environments-openai-gym/
 class FormationEnv(Env):
-    formations = ["V-formation", "Ant-trail"]
-
-    def __init__(self, fps : int = 30, formation : Basic_Formation = V_formation, ep_count : int = 5):
+    def __init__(self, fps : int = 30, formation_class : Basic_Formation = V_formation, ep_count : int = 5):
         super(FormationEnv, self).__init__()
         # Define metadata
-        self.metadata = {"render_modes" : ["human", "rgb_array"], "render_fps" : fps, "tot_episodes" : ep_count}
+        self.metadata = {"render_modes" : ["human", "rgb_array"], "render_fps" : fps,
+                         "tot_episodes" : ep_count, "formation_class" : formation_class}
         self.episode = 1
         # Define a 2-D observation space
         self.observation_shape = (600, 800, 3)
         self.observation_space = spaces.Box(
             low=np.zeros(self.observation_shape),
-            high=np.ones(self.observation_shape),
-            dtype=np.float32
+            high=np.ones(self.observation_shape)
         )
 
         # Define an action space for straight
         self.action_space = spaces.Discrete(1)
 
         # Create a canvas to render the environment
-        self.canvas = np.ones(self.observation_shape, dtype=np.float32) * 1
+        self.canvas = np.ones(self.observation_shape) * 1
 
         # Initialize with empty dictionary for the current missile coordinates
         self.state = [{}]
 
-        # Chopper boundaries
+        # boundaries
         self.y_min = 0
         self.x_min = 0
         self.y_max = self.observation_shape[0]
         self.x_max = self.observation_shape[1]
 
         # Initialize formation
-        self.formation = formation()
+        self.formation = formation_class()
 
-        # Intialize 2d list for data
-        self.data = [[]]
+        # Intialize list for data
+        self.data = []
     
     def draw_elements_on_canvas(self):
         # Init the canvas
-        self.canvas = np.ones(self.observation_shape, dtype=np.float32) * 1
+        self.canvas = np.ones(self.observation_shape) * 1
 
-        # Draw the helicopter on canvas
+        # Draw the objects on canvas
         for elem in self.elements:
             elem_shape = elem.icon.shape
             x,y = elem.x, elem.y
-            self.canvas[y : y + elem_shape[1], x : x + elem_shape[0]] = elem.icon
+            self.canvas[y : y + elem_shape[0], x : x + elem_shape[1]] = elem.icon
 
-        text = f'Episode: {self.episode} | Missiles Left: {len(self.state[0])}'
+        remaining = len([missile for missile in self.formation.get_missiles() if missile.alive])
+        text = f'Episode: {self.episode} | Missiles Left: {remaining}'
 
         # Put text on canvas
         self.canvas = cv2.putText(self.canvas, text, (10, 20), font, 0.8, (0,0,0), 1, cv2.LINE_AA)
@@ -75,21 +74,22 @@ class FormationEnv(Env):
         spawned_turret = Turret(f"turret_{self.turret_count}", self.x_max, self.x_min, self.y_max, self.y_min)
 
         # Spawn a turret in a random location on the right-half of the screen
-        turret_x = random.randrange(int(self.observation_shape[1] * 0.50), int(self.observation_shape[1]))
-        turret_y = random.randrange(0, int(self.observation_shape[0]))
+        turret_x = random.randrange(int(self.observation_shape[1] * 0.50), int(self.observation_shape[1] * 0.95))
+        turret_y = random.randrange(int(self.observation_shape[0] * 0.05), int(self.observation_shape[0] * 0.95))
         spawned_turret.set_position(turret_x, turret_y)
         
         # Append the spawned turret to the elements currently present in Env. 
         self.elements.append(spawned_turret)
         
-        # Store the elements
+        # Reset and store the missiles
+        self.formation = self.metadata["formation_class"]()
         self.elements += self.formation.get_missiles()
 
         # Missile states
         self.state[0] = {missile.name : missile.get_position() for missile in self.formation.get_missiles()}
 
         # Reset the canvas
-        self.canvas = np.ones(self.observation_shape, dtype=np.float32) * 1
+        self.canvas = np.ones(self.observation_shape) * 1
 
         # Draw canvas elements
         self.draw_elements_on_canvas()
@@ -112,6 +112,7 @@ class FormationEnv(Env):
     def get_action_meanings(self):
         return {0: "Straight"}
 
+    #FIXME Only works on square shapes, not rectangles
     def has_collided(self, elem1, elem2):
         x_col = False
         y_col = False
@@ -131,25 +132,25 @@ class FormationEnv(Env):
         return False
     
     def step(self, action):
+        if not self.action_space.contains(action):
+            raise ValueError(f"Provided action '{action}' is not valid")
         # Flag that marks the termination of an episode
         done = False
 
         reward = 0
 
-        [missile.move(3,0) for missile in self.missiles if missile in self.elements]
+        self.formation.move_forward()
 
         for elem in self.elements:
             if isinstance(elem, Turret):
-                # If the turret has collided with a missile
-                for m_index in range(len(self.missiles)-1, -1, -1):
-                    missile = self.missiles[m_index]
-                    if missile in self.elements:
-                        if self.has_collided(missile, elem): #TODO set kill zone and conclude game when all missiles are destroyed
-                            reward = -10
-                            self.elements.remove(missile)
+                for alive_missile in [missile for missile in self.formation.get_missiles() if missile.alive]:
+                    if self.has_collided(alive_missile, elem):
+                        reward -= 10
+                        self.elements.remove(alive_missile)
+                        alive_missile.kill()
 
         # Missile states
-        self.state[0] = {missile.name : missile.get_position() for missile in self.missiles if missile in self.elements}
+        self.state[0] = {missile.name : missile.get_position() for missile in self.formation.get_missiles()}
 
         
 
@@ -157,25 +158,29 @@ class FormationEnv(Env):
         self.draw_elements_on_canvas()
 
         # if missiles reach end of screen, end the episode
-        for missile in self.missiles:
-            if missile in self.elements:
-                if missile.get_position()[0] + missile.icon_w >= self.x_max:
-                    # TODO add Missile survived logic
-                    self.elements.remove(missile)
+        survived = 0
+        for alive_missile in [missile for missile in self.formation.get_missiles() if missile.alive]:
+            if alive_missile.get_position()[0] + alive_missile.icon_w >= self.x_max:
+                # TODO add Missile survived logic
+                self.elements.remove(alive_missile)
+                survived += 1
+                alive_missile.kill()
 
+        # Default info object
         info = {"episode": self.episode, "state": self.state}
-        self.data += [] # TODO put data row here
 
         # If all missiles are destroyed or reach the end of the screen, end the episode
         if len([elem for elem in self.elements if isinstance(elem, Missile)]) == 0:
-            # If episode count is fulfilled, set done to True, else reset
+            # Collect data from this episode
+            # TODO Make a numeric formation lookup
+            self.data.append([self.formation.missile_count, 0, self.turret_count, survived])
+            # Increment episode counter
             self.episode += 1
-            info["episode"] += 1
-            # Define default info object
+            # If episode count is fulfilled, set done to True, else reset
             if self.episode > self.metadata["tot_episodes"]:
                 done = True
-                # Add data to info object
-                info["data"] = pd.DataFrame(data=self.data, columns=['Missile Count', 'Formation Used', 'Turrent Count','Missiles Survive'],dtype=int)
+                # Add collected data to info object
+                info["data"] = pd.DataFrame(data=self.data, columns=['Missile Count', 'Formation Used', 'Turret Count', 'Missiles Survived'], dtype=int)
             else:
                 self.reset()
 
