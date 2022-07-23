@@ -21,15 +21,16 @@ class FormationEnv(Env):
         # Define a 2-D observation space
         self.observation_shape = (600, 800, 3)
         self.observation_space = spaces.Box(
-            low=np.zeros(self.observation_shape),
-            high=np.ones(self.observation_shape)
+            low=np.zeros(self.observation_shape, np.float32),
+            high=np.ones(self.observation_shape, np.float32),
+            dtype=np.float32
         )
 
         # Define an action space for straight
         self.action_space = spaces.Discrete(1)
 
         # Create a canvas to render the environment
-        self.canvas = np.ones(self.observation_shape) * 1
+        self.canvas = np.ones(self.observation_shape, np.float32) * 1
 
         # Initialize with empty dictionary for the current missile coordinates
         self.state = [{}]
@@ -48,7 +49,7 @@ class FormationEnv(Env):
     
     def draw_elements_on_canvas(self):
         # Init the canvas
-        self.canvas = np.ones(self.observation_shape) * 1
+        self.canvas = np.ones(self.observation_shape, np.float32) * 1
 
         # Draw the objects on canvas
         for elem in self.elements:
@@ -89,7 +90,7 @@ class FormationEnv(Env):
         self.state[0] = {missile.name : missile.get_position() for missile in self.formation.get_missiles()}
 
         # Reset the canvas
-        self.canvas = np.ones(self.observation_shape) * 1
+        self.canvas = np.ones(self.observation_shape, dtype=np.float32) * 1
 
         # Draw canvas elements
         self.draw_elements_on_canvas()

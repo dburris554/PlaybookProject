@@ -52,7 +52,7 @@ class RL_Env(Env):
         for elem in self.elements:
             elem_shape = elem.icon.shape
             x,y = elem.x, elem.y
-            self.canvas[y : y + elem_shape[1], x : x + elem_shape[0]] = elem.icon
+            self.canvas[y : y + elem_shape[0], x : x + elem_shape[1]] = elem.icon
 
         # TODO remove or edit text
         text = f'Episode: {self.episode} | Missiles Left: {len(self.state[0])}'
@@ -163,19 +163,19 @@ class RL_Env(Env):
 
         # apply the action to the missiles # TODO convert to top down 2-D for missles. Adjust move coordinates for each move action
         if action == 0: # FIXME Currently not logical action-taking
-            [missile.move(0,5) for missile in self.missiles if missile in self.elements]
+            [missile.move(5,0) for missile in self.missiles if missile in self.elements]
         elif action == 1:
-            [missile.move(0,5) for missile in self.missiles if missile in self.elements]
+            [missile.move(5,0) for missile in self.missiles if missile in self.elements]
         elif action == 2:
-            [missile.move(0,5) for missile in self.missiles if missile in self.elements]
+            [missile.move(5,0) for missile in self.missiles if missile in self.elements]
 
         # Spawn a turret
         spawned_turret = Turret(f"turret_{self.turret_count + 1}", self.x_max, self.x_min, self.y_max, self.y_min)
         self.turret_count += 1 #TODO set amount of turrents
 
         # Spawn a turret in a random location on the right-half of the screen
-        turret_x = random.randrange(int(self.observation_shape[0] * 0.5), int(self.observation_shape[0] * 0.95)) 
-        turret_y = random.randrange(int(self.observation_shape[1] * 0.05), int(self.observation_shape[1] * 0.95))
+        turret_x = random.randrange(int(self.observation_shape[1] * 0.5), int(self.observation_shape[1] * 0.95)) 
+        turret_y = random.randrange(int(self.observation_shape[0] * 0.05), int(self.observation_shape[0] * 0.95))
         spawned_turret.set_position(turret_x, turret_y)
         
         # Append the spawned turret to the elements currently present in Env. 
