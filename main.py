@@ -1,12 +1,12 @@
 from colosseum import FormationEnv
 
-env = FormationEnv()
+env = FormationEnv(ep_count=20)
 obs = env.reset()
 
 while True:
     action = 0
     obs, reward, done, info = env.step(action)
-    env.render()
+    env.render(mode="rgb_array")
 
     if done:
         data = info["data"]

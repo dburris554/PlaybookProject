@@ -1,8 +1,9 @@
 from components import Missile
 
 class Basic_Formation():
-    def __init__(self, name : str, max_x : int, max_y : int, coords : list[tuple]):
+    def __init__(self, name : str, number : int, max_x : int, max_y : int, coords : list[tuple]):
         self.name = name
+        self.number = number
         self.missile_lookup = {}
         self.missile_count = len(coords)
         for i in range(self.missile_count):
@@ -20,11 +21,13 @@ class Basic_Formation():
                 missile.move(5,0)
 
 class V_formation(Basic_Formation):
+    number = 1
     coordinates = [(160, 300-75), (160+100, 300), (160, 300+75)]
-    def __init__(self, name="V_formation", max_x=800, max_y=600, coords=coordinates):
-        super().__init__(name, max_x, max_y, coords)
+    def __init__(self, name="V_formation", number=number, max_x=800, max_y=600, coords=coordinates):
+        super().__init__(name, number, max_x, max_y, coords)
     
 class Ant_trail(Basic_Formation):
+    number = 2
     coordinates = [(160-75, 300), (160, 300), (160+75, 300)]
-    def __init__(self, name="Ant_trail", max_x=800, max_y=600, coords=coordinates):
-        super().__init__(name, max_x, max_y, coords)
+    def __init__(self, name="Ant_trail", number=number, max_x=800, max_y=600, coords=coordinates):
+        super().__init__(name, number, max_x, max_y, coords)

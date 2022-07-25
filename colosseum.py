@@ -18,6 +18,7 @@ class FormationEnv(Env):
         self.metadata = {"render_modes" : ["human", "rgb_array"], "render_fps" : fps,
                          "tot_episodes" : ep_count, "formation_class" : formation_class}
         self.episode = 1
+        self.survived = 0
         # Define a 2-D observation space
         self.observation_shape = (600, 800, 3)
         self.observation_space = spaces.Box(
@@ -64,23 +65,19 @@ class FormationEnv(Env):
         self.canvas = cv2.putText(self.canvas, text, (10, 20), font, 0.8, (0,0,0), 1, cv2.LINE_AA)
 
     def reset(self):
-        self.turret_count = 1
+        self.turret_count = 4
+        self.survived = 0
         self.elements = []
 
-        # Initial formation location
-        x = int(self.observation_shape[1] * 0.2)
-        y = int(self.observation_shape[0] * 0.5)
-
-        # Initialize turret
-        spawned_turret = Turret(f"turret_{self.turret_count}", self.x_max, self.x_min, self.y_max, self.y_min)
-
-        # Spawn a turret in a random location on the right-half of the screen
-        turret_x = random.randrange(int(self.observation_shape[1] * 0.50), int(self.observation_shape[1] * 0.95))
-        turret_y = random.randrange(int(self.observation_shape[0] * 0.05), int(self.observation_shape[0] * 0.95))
-        spawned_turret.set_position(turret_x, turret_y)
-        
-        # Append the spawned turret to the elements currently present in Env. 
-        self.elements.append(spawned_turret)
+        # Create turrets in specific quadrants
+        turret1 = self.create_turret(0.50, 0.75, 0, 0.25)
+        self.elements.append(turret1)
+        turret2 = self.create_turret(0.75, 1, 0, 0.25)
+        self.elements.append(turret2)
+        turret3 = self.create_turret(0.50, 0.75, 0.5, 1)
+        self.elements.append(turret3)
+        turret4 = self.create_turret(0.75, 1, 0.5, 1)
+        self.elements.append(turret4)
         
         # Reset and store the missiles
         self.formation = self.metadata["formation_class"]()
@@ -98,6 +95,18 @@ class FormationEnv(Env):
         # Return initial observation
         return self.canvas
 
+    def create_turret(self, x_minp, x_maxp, y_minp, y_maxp):
+        # Initialize turret
+        spawned_turret = Turret(f"turret_{self.turret_count}", self.x_max, self.x_min, self.y_max, self.y_min)
+
+        # Spawn a turret in a random location on the right-half of the screen
+        turret_x = random.randrange(int(self.observation_shape[1] * x_minp), int(self.observation_shape[1] * x_maxp))
+        turret_y = random.randrange(int(self.observation_shape[0] * y_minp), int(self.observation_shape[0] * y_maxp))
+        spawned_turret.set_position(turret_x, turret_y)
+
+        return spawned_turret
+        
+
     def render(self, mode = "human"): # TODO later default mode will be different
         assert mode in ["human", "rgb_array"], "Invalid mode, must be either \"human\" or \"rgb_array\""
         if mode == "human":
@@ -113,7 +122,6 @@ class FormationEnv(Env):
     def get_action_meanings(self):
         return {0: "Straight"}
 
-    #FIXME Only works on square shapes, not rectangles
     def has_collided(self, elem1, elem2):
         x_col = False
         y_col = False
@@ -121,12 +129,20 @@ class FormationEnv(Env):
         elem1_x, elem1_y = elem1.get_position()
         elem2_x, elem2_y = elem2.get_position()
 
-        if 2 * abs(elem1_x - elem2_x) <= (elem1.icon_w + elem2.icon_w):
-            x_col = True
+        if elem1_x <= elem2_x:
+            if elem1_x + elem1.icon_w - 1 >= elem2_x:
+                x_col = True
+        elif elem1_x > elem2_x:
+            if elem2_x + elem2.icon_w - 1 >= elem1_x:
+                x_col = True
 
-        if 2 * abs(elem1_y - elem2_y) <= (elem1.icon_h + elem2.icon_h):
-            y_col = True
-
+        if elem1_y <= elem2_y:
+            if elem1_y + elem1.icon_h - 1 >= elem2_y:
+                y_col = True
+        elif elem1_y > elem2_y:
+            if elem2_y + elem2.icon_h - 1 >= elem1_y:
+                y_col = True
+            
         if x_col and y_col:
             return True
 
@@ -159,12 +175,11 @@ class FormationEnv(Env):
         self.draw_elements_on_canvas()
 
         # if missiles reach end of screen, end the episode
-        survived = 0
-        for alive_missile in [missile for missile in self.formation.get_missiles() if missile.alive]:
+        alive_missiles = [missile for missile in self.formation.get_missiles() if missile.alive]
+        for alive_missile in alive_missiles:
             if alive_missile.get_position()[0] + alive_missile.icon_w >= self.x_max:
-                # TODO add Missile survived logic
                 self.elements.remove(alive_missile)
-                survived += 1
+                self.survived += 1
                 alive_missile.kill()
 
         # Default info object
@@ -173,8 +188,7 @@ class FormationEnv(Env):
         # If all missiles are destroyed or reach the end of the screen, end the episode
         if len([elem for elem in self.elements if isinstance(elem, Missile)]) == 0:
             # Collect data from this episode
-            # TODO Make a numeric formation lookup
-            self.data.append([self.formation.missile_count, 0, self.turret_count, survived])
+            self.data.append([self.formation.missile_count, self.formation.number, self.turret_count, self.survived])
             # Increment episode counter
             self.episode += 1
             # If episode count is fulfilled, set done to True, else reset
