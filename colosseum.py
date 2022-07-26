@@ -5,18 +5,21 @@ import pandas as pd
 
 from gym import Env, spaces
 from components import Missile, Turret
-from formations import Basic_Formation, V_formation, Ant_trail
+from formations import Basic_Formation
 
 font = cv2.FONT_HERSHEY_COMPLEX_SMALL
 
 # This environment is based on the ChopperScape environment from this paper:
 # https://blog.paperspace.com/creating-custom-environments-openai-gym/
 class FormationEnv(Env):
-    def __init__(self, fps : int = 30, formation_class : Basic_Formation = V_formation, ep_count : int = 5):
+    def __init__(self, formation_class : Basic_Formation, turret_count : int = 3, fps : int = 30, ep_count : int = 5):
         super(FormationEnv, self).__init__()
         # Define metadata
         self.metadata = {"render_modes" : ["human", "rgb_array"], "render_fps" : fps,
                          "tot_episodes" : ep_count, "formation_class" : formation_class}
+        if turret_count not in [1,2,3,4]:
+            raise ValueError(f"turret count '{turret_count}' is not valid")
+        self.turret_count = turret_count
         self.episode = 1
         self.survived = 0
         # Define a 2-D observation space
@@ -65,19 +68,34 @@ class FormationEnv(Env):
         self.canvas = cv2.putText(self.canvas, text, (10, 20), font, 0.8, (0,0,0), 1, cv2.LINE_AA)
 
     def reset(self):
-        self.turret_count = 4
         self.survived = 0
         self.elements = []
 
-        # Create turrets in specific quadrants
-        turret1 = self.create_turret(0.50, 0.75, 0, 0.25)
-        self.elements.append(turret1)
-        turret2 = self.create_turret(0.75, 1, 0, 0.25)
-        self.elements.append(turret2)
-        turret3 = self.create_turret(0.50, 0.75, 0.5, 1)
-        self.elements.append(turret3)
-        turret4 = self.create_turret(0.75, 1, 0.5, 1)
-        self.elements.append(turret4)
+        if self.turret_count == 1:
+            turret1 = self.create_turret(0.5, 1, 0, 1)
+            self.elements.append(turret1)
+        elif self.turret_count == 2:
+            turret1 = self.create_turret(0.5, 1, 0, 0.6)
+            self.elements.append(turret1)
+            turret2 = self.create_turret(0.5, 1, 0.4, 1)
+            self.elements.append(turret2)
+        elif self.turret_count == 3:
+            turret1 = self.create_turret(0.5, 1, 0, 0.4)
+            self.elements.append(turret1)
+            turret2 = self.create_turret(0.5, 1, 0.3, 0.7)
+            self.elements.append(turret2)
+            turret3 = self.create_turret(0.5, 1, 0.6, 1)
+            self.elements.append(turret3)
+        elif self.turret_count == 4:
+            # Create turrets in quadrants
+            turret1 = self.create_turret(0.5, 0.75, 0, 0.6)
+            self.elements.append(turret1)
+            turret2 = self.create_turret(0.75, 1, 0, 0.6)
+            self.elements.append(turret2)
+            turret3 = self.create_turret(0.5, 0.75, 0.4, 1)
+            self.elements.append(turret3)
+            turret4 = self.create_turret(0.75, 1, 0.4, 1)
+            self.elements.append(turret4)
         
         # Reset and store the missiles
         self.formation = self.metadata["formation_class"]()
@@ -188,7 +206,7 @@ class FormationEnv(Env):
         # If all missiles are destroyed or reach the end of the screen, end the episode
         if len([elem for elem in self.elements if isinstance(elem, Missile)]) == 0:
             # Collect data from this episode
-            self.data.append([self.formation.missile_count, self.formation.number, self.turret_count, self.survived])
+            self.data.append([self.formation.missile_count, self.formation.id, self.turret_count, self.survived])
             # Increment episode counter
             self.episode += 1
             # If episode count is fulfilled, set done to True, else reset

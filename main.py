@@ -1,12 +1,13 @@
 from colosseum import FormationEnv
+from formations import *
 
-env = FormationEnv(ep_count=20)
+env = FormationEnv(Marching3, turret_count=3, ep_count=5)
 obs = env.reset()
 
 while True:
     action = 0
     obs, reward, done, info = env.step(action)
-    env.render(mode="rgb_array")
+    env.render(mode="human")
 
     if done:
         data = info["data"]
