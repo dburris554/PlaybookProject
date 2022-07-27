@@ -1,20 +1,24 @@
 from main import data
 from sklearn.model_selection import train_test_split
 import pandas as pd
-from sklearn.naive_bayes import GaussianNB
+from sklearn.naive_bayes import MultinomialNB
 from sklearn import metrics
 
 df = pd.DataFrame(data)
-print(df)
+#print("Data:" , df)
 
 features = df[["Missile Count","Formation Used", "Turret Count"]]
-label = df["Missiles Survived"]
+label = df[["Missiles Survived"]]
 
 # Split Data
-X_train, X_test, y_train, y_test = train_test_split(features, label, test_size=0.3,random_state=109)
+X_train, X_test, y_train, y_test = train_test_split(features, label, test_size=0.3)
+#print ("X Train:", X_train)
+#print ("Y Train:", y_train)
+#print ("X Test:", X_test)
+#print ("Y Test:", y_test)
 
 # Create Classifier
-gnb = GaussianNB()
+gnb = MultinomialNB()
 
 # Train model
 gnb.fit(X_train, y_train)

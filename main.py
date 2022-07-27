@@ -1,7 +1,7 @@
 from colosseum import FormationEnv
 from formations import *
 
-env = FormationEnv(Marching3, turret_count=3, ep_count=100)
+env = FormationEnv(Marching3, turret_count=2, ep_count=100)
 obs = env.reset()
 
 while True:
@@ -11,7 +11,7 @@ while True:
 
     if done:
         data = info["data"]
-        print(data)
+        #print(data)
         break
 
 env.close()
