@@ -160,7 +160,7 @@ class FormationEnv(Env):
                 alive_missile.kill()
 
         # Default info object
-        info = {"episode": self.episode, "state": self.state}
+        info = {"episode_number": self.episode, "state": self.state}
 
         # If all missiles are destroyed or reach the end of the screen, end the episode
         if len([elem for elem in self.elements if isinstance(elem, Missile)]) == 0:

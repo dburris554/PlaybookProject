@@ -176,7 +176,7 @@ class RL_Env(Env):
         if len([elem for elem in self.elements if isinstance(elem, Missile)]) == 0:
             done = True
 
-        info = {"episode": self.episode, "state": self.state, "ep_reward": self.ep_reward}
+        info = {"episode_number": self.episode, "state": self.state, "ep_reward": self.ep_reward}
 
         if done:
             self.episode += 1
