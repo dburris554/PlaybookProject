@@ -1,12 +1,13 @@
 from learning import RL_Env
 
 print("-------------These are random actions in the given environment-------------")
-env = RL_Env()
+env = RL_Env(fps=20)
 episodes = 0
 obs = env.reset()
 while episodes < 5:
     action = env.action_space.sample()
     obs, reward, done, info = env.step(action)
+    print(info)
     env.render(mode="human")
 
     if done:
@@ -18,26 +19,27 @@ env.close()
 print("-------------Then an RL algorithm is trained in this environment-------------")
 from stable_baselines3 import PPO
 from stable_baselines3.ppo import MlpPolicy
+from stable_baselines3.common.env_util import make_vec_env
 
-expert = PPO(
-    policy=MlpPolicy,
-    env=RL_Env(),
-    seed=0,
-    batch_size=32,
-    ent_coef=0.0,
-    learning_rate=0.03, # Note: usually 0.003
-    n_epochs=10,
-    n_steps=32,
-    verbose=1
-)
-expert = expert.learn(200)  # Note: set to 100000 to train a proficient expert
+multi_env = make_vec_env(RL_Env, n_envs=4)
+
+# expert = PPO(
+#     policy=MlpPolicy,
+#     env=multi_env,
+#     learning_rate=0.003, # usually 0.0003
+#     n_steps=256,
+#     verbose=1
+# )
+# expert.learn(total_timesteps=1000)  # Note: set to 100_000 to train a proficient expert
+# expert.save("rl_alg")
+expert = PPO.load("rl_alg")
 
 print("-------------This is how the trained algorithm acts in the environment-------------")
-env = RL_Env()
+env = RL_Env(fps=100)
 episodes = 0
 obs = env.reset()
 while episodes < 10:
-    action = expert.policy.predict(obs)[0]
+    action = expert.predict(obs)[0]
     obs, reward, done, info = env.step(action)
     env.render(mode="human")
     

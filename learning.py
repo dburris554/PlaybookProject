@@ -36,7 +36,7 @@ class RL_Env(Env):
         self.max_fuel = 200
 
         # TODO
-        self.state = [{}, None, None] # current coodinates, distance to target, movement distance as heading Left(2,3), right(2,-3)
+        self.state = [{}] # current coodinates, distance to target, movement distance as heading Left(2,3), right(2,-3)
 
         # Object boundaries
         self.y_min = 0
@@ -132,7 +132,12 @@ class RL_Env(Env):
         self.fuel_left -= 1
 
         # Timestep reward # TODO change to the state of the missle moving toward the target and positive reward for closer/negative for further
-        reward = 1
+        # No reward if missile is hugging the walls
+        y = self.missile.get_position()[1]
+        if y > int(self.y_max * 0.1) and y < int(self.y_max * 0.9):
+            reward = 2
+        else:
+            reward = 0
 
         # apply the action to the missiles # TODO convert to top down 2-D for missles. Adjust move coordinates for each move action
         if action == 0:
@@ -146,7 +151,7 @@ class RL_Env(Env):
             if isinstance(elem, Turret):
                 if self.missile.alive:
                     if has_collided(self.missile, elem):
-                        reward -= 50
+                        reward -= 25
                         self.elements.remove(self.missile)
                         self.missile.kill()
             if isinstance(elem, Target):
@@ -154,7 +159,7 @@ class RL_Env(Env):
                     if has_collided(self.missile, elem):
                         y = self.missile.get_position()[1]
                         dist_to_center = abs(y - int(self.observation_shape[0] * 0.5))
-                        reward += 500 - dist_to_center
+                        reward += max(500 - (dist_to_center * 2), 0)
                         reward += self.fuel_left
                         self.elements.remove(self.missile)
                         self.missile.kill()
