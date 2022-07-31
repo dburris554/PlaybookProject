@@ -20,6 +20,12 @@ class Basic_Formation():
             if missile.alive:
                 missile.move(10,0)
 
+class V2(Basic_Formation):
+    id = 9
+    coordinates = [(160+75, 300), (160, 300+50)]
+    def __init__(self, name="V2", id=id, max_x=800, max_y=600, coords=coordinates):
+        super().__init__(name, id, max_x, max_y, coords)
+
 class V3(Basic_Formation):
     id = 1
     coordinates = [(160, 300-50), (160+75, 300), (160, 300+50)]
@@ -32,6 +38,12 @@ class V4(Basic_Formation):
     def __init__(self, name="V4", id=id, max_x=800, max_y=600, coords=coordinates):
         super().__init__(name, id, max_x, max_y, coords)
 
+class V5(Basic_Formation):
+    id = 10
+    coordinates = [(160-75, 300-100), (160, 300-50), (160+75, 300), (160, 300+50), (160-75, 300+100)]
+    def __init__(self, name="V5", id=id, max_x=800, max_y=600, coords=coordinates):
+        super().__init__(name, id, max_x, max_y, coords)
+
 class Flock8(Basic_Formation):
     id = 8
     coordinates = [(160+50, 300), (160, 300-50), (160, 300+50), (160-25, 300), 
@@ -39,10 +51,28 @@ class Flock8(Basic_Formation):
     def __init__(self, name="Flock8", id=id, max_x=800, max_y=600, coords=coordinates):
         super().__init__(name, id, max_x, max_y, coords)
     
+class Ant2(Basic_Formation):
+    id = 11
+    coordinates = [(160-75, 300), (160, 300)]
+    def __init__(self, name="Ant2", id=id, max_x=800, max_y=600, coords=coordinates):
+        super().__init__(name, id, max_x, max_y, coords)
+
 class Ant3(Basic_Formation):
     id = 2
     coordinates = [(160-75, 300), (160, 300), (160+75, 300)]
     def __init__(self, name="Ant3", id=id, max_x=800, max_y=600, coords=coordinates):
+        super().__init__(name, id, max_x, max_y, coords)
+
+class Ant4(Basic_Formation):
+    id = 12
+    coordinates = [(160-150, 300), (160-75, 300), (160, 300), (160+75, 300)]
+    def __init__(self, name="Ant4", id=id, max_x=800, max_y=600, coords=coordinates):
+        super().__init__(name, id, max_x, max_y, coords)
+
+class Ant5(Basic_Formation):
+    id = 13
+    coordinates = [(160-150, 300), (160-75, 300), (160, 300), (160+75, 300), (160+150, 300)]
+    def __init__(self, name="Ant5", id=id, max_x=800, max_y=600, coords=coordinates):
         super().__init__(name, id, max_x, max_y, coords)
 
 class Marching2(Basic_Formation):
