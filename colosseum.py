@@ -16,6 +16,7 @@ class FormationEnv(Env):
         # Define metadata
         self.metadata = {"render_modes" : ["human", "rgb_array"], "render_fps" : fps,
                          "tot_episodes" : ep_count, "formation_class" : formation_class}
+        # Validate turret count
         if turret_count not in [1,2,3,4]:
             raise ValueError(f"turret count '{turret_count}' is not valid")
         self.turret_count = turret_count
@@ -38,7 +39,7 @@ class FormationEnv(Env):
         # Initialize with empty dictionary for the current missile coordinates
         self.state = [{}]
 
-        # boundaries
+        # Object boundaries
         self.y_min = 0
         self.x_min = 0
         self.y_max = self.observation_shape[0]
@@ -60,6 +61,7 @@ class FormationEnv(Env):
             x,y = elem.x, elem.y
             self.canvas[y : y + elem_shape[0], x : x + elem_shape[1]] = elem.icon
 
+        # Define text to be drawn
         remaining = len([missile for missile in self.formation.get_missiles() if missile.alive])
         text = f'Episode: {self.episode} | Missiles Left: {remaining}'
 
@@ -70,6 +72,7 @@ class FormationEnv(Env):
         self.survived = 0
         self.elements = []
 
+        # Spawn turrets in random locations
         if self.turret_count == 1:
             turret1 = create_rand_turret(self, "1", 0.5, 1, 0, 1)
             self.elements.append(turret1)
@@ -86,7 +89,6 @@ class FormationEnv(Env):
             turret3 = create_rand_turret(self, "3", 0.5, 1, 0.6, 1)
             self.elements.append(turret3)
         elif self.turret_count == 4:
-            # Create turrets in quadrants
             turret1 = create_rand_turret(self, "1", 0.5, 0.75, 0, 0.6)
             self.elements.append(turret1)
             turret2 = create_rand_turret(self, "2", 0.75, 1, 0, 0.6)
@@ -112,12 +114,14 @@ class FormationEnv(Env):
         # Return initial observation
         return self.canvas
 
-    def render(self, mode = "human"): # TODO later default mode will be different
-        assert mode in ["human", "rgb_array"], "Invalid mode, must be either \"human\" or \"rgb_array\""
+    def render(self, mode = "human"):
+        # Validate render mode
+        if mode not in ["human", "rgb_array"]:
+            raise ValueError("Invalid mode, must be either \"human\" or \"rgb_array\"")
+        
         if mode == "human":
             cv2.imshow("Game", self.canvas)
             cv2.waitKey(1000 // self.metadata["render_fps"])
-
         elif mode == "rgb_array":
             return self.canvas
     
@@ -128,20 +132,23 @@ class FormationEnv(Env):
         return {0: "Straight"}
 
     def step(self, action):
+        # Validate provided action
         if not self.action_space.contains(action):
             raise ValueError(f"Provided action '{action}' is not valid")
         # Flag that marks the termination of an episode
         done = False
 
+        # Rewards don't matter
         reward = 0
 
+        # Maintain formation and move the missiles with a "straight" action
         self.formation.move_forward()
 
+        # Collision logic
         for elem in self.elements:
             if isinstance(elem, Turret):
                 for alive_missile in [missile for missile in self.formation.get_missiles() if missile.alive]:
                     if has_collided(alive_missile, elem):
-                        reward -= 10
                         self.elements.remove(alive_missile)
                         alive_missile.kill()
 
@@ -151,7 +158,7 @@ class FormationEnv(Env):
         # Draw elements on the canvas
         self.draw_elements_on_canvas()
 
-        # if missiles reach end of screen, end the episode
+        # If missiles reach end of screen, keep count and kill them
         alive_missiles = [missile for missile in self.formation.get_missiles() if missile.alive]
         for alive_missile in alive_missiles:
             if alive_missile.get_position()[0] + alive_missile.icon_w >= self.x_max:
@@ -171,7 +178,7 @@ class FormationEnv(Env):
             # If episode count is fulfilled, set done to True, else reset
             if self.episode > self.metadata["tot_episodes"]:
                 done = True
-                # Add collected data to info object
+                # Add data collected from episodes to info object
                 info["data"] = pd.DataFrame(data=self.data, columns=['Missile Count', 'Formation Used', 'Turret Count', 'Missiles Survived'], dtype=int)
             else:
                 self.reset()
