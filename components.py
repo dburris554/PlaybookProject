@@ -28,7 +28,7 @@ class Point(object):
     def clamp(self, n, minn, maxn):
         return max(min(maxn, n), minn)
 
-def has_collided(elem1, elem2):
+def has_collided(elem1, elem2) -> bool:
     x_col = False
     y_col = False
 
@@ -74,7 +74,7 @@ class Turret(Point):
         self.icon_h = 64
         self.icon = cv2.resize(self.icon, (self.icon_w, self.icon_h))
 
-def create_turret(env, id, x, y):
+def create_turret(env, id, x, y) -> Turret:
     # Initialize turret
     spawned_turret = Turret(f"turret_{id}", env.x_max, env.x_min, env.y_max, env.y_min)
 
@@ -83,7 +83,7 @@ def create_turret(env, id, x, y):
 
     return spawned_turret
 
-def create_rand_turret(env, id, x_minp, x_maxp, y_minp, y_maxp):
+def create_rand_turret(env, id, x_minp, x_maxp, y_minp, y_maxp) -> Turret:
     # Initialize turret
     spawned_turret = Turret(f"turret_{id}", env.x_max, env.x_min, env.y_max, env.y_min)
 
