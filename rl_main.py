@@ -25,12 +25,12 @@ multi_env = make_vec_env(RL_Env, n_envs=4)
 expert = PPO(
     policy=MlpPolicy,
     env=multi_env,
-    learning_rate=0.003, # usually 0.0003
-    n_steps=256,
+    learning_rate=0.0003, # usually 0.0003
+    n_steps=512,
     verbose=1
 )
-expert.learn(total_timesteps=1000)  # Note: set to 100_000 to train a proficient expert
-expert.save("rl_alg")
+expert.learn(total_timesteps=100000)  # Note: set to 100_000 to train a proficient expert
+expert.save("rl_alg2")
 # expert = PPO.load("rl_alg")
 
 print("-------------These are a trained agent's actions in the environment-------------")
