@@ -15,7 +15,7 @@ class RL_Env(Env):
         # Define metadata
         self.metadata = {"render_modes" : ["human", "rgb_array"], "render_fps" : fps}
         # Validate turret count
-        if turret_count not in [1,2,3,4]: # TODO Add other turret formations
+        if turret_count not in [1,2,3,4]:
             raise ValueError(f"turret count '{turret_count}' is not valid")
         self.turret_count = turret_count
         self.episode = 1
