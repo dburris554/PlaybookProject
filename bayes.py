@@ -1,7 +1,5 @@
-from sklearn.model_selection import train_test_split
 import pandas as pd
 from sklearn.naive_bayes import GaussianNB
-from sklearn import metrics
 import formations as formations
 
 class Oracle():
@@ -11,30 +9,29 @@ class Oracle():
     def get_answers(self, n_missiles : int, n_turrets : int) -> str :
         flt_df = self.df[self.df["Missile Count"].isin([n_missiles])]
         features = flt_df[["Missile Count", "Formation Used", "Turret Count"]]
-        label = flt_df.pop("Missiles Survived")
-
-        # Split Data
-        X_train, _, y_train, _ = train_test_split(features, label, test_size=0)
+        labels = flt_df.pop("Missiles Survived")
 
         # Create Classifier
         gnb = GaussianNB()
 
         # Train model
-        gnb.fit(X_train, y_train)
+        gnb.fit(features.values, labels)
 
         # Determine which formations are in the data
-        valid_formations = [c for c in formations if isinstance(c, formations.Basic_Formation)]
-        formation_dict = {f.id : str(f) for f in valid_formations}
+        valid_formations = [(name, cls) for name, cls in formations.__dict__.items() if hasattr(cls, 'id')]
+        formation_dict = {cls.id : name for name, cls in valid_formations}
         formation_ids = flt_df["Formation Used"].unique()
+
+        # Collect predictions for each formation
         answers = []
         for id in formation_ids:
-            # Find highest confidence class
+            # Find highest confidence class and confidence of that class
             survived = int(gnb.predict([[n_missiles, id, n_turrets]]))
-            # Find confidence of that class
-            predicted = float(gnb.predict_proba([[n_missiles, id, n_turrets], survived]))
+            confidence = max(gnb.predict_proba([[n_missiles, id, n_turrets]])[0])
             # Convert confidence to percentage
-            percentage = str(round(float(("%.17f" % predicted).rstrip('0').rstrip('.')) * 100, 2)) + "%"
+            percentage = str(round(float(("%.17f" % confidence).rstrip('0').rstrip('.')) * 100, 1)) + "%"
             # Collect answer
-            answer = f"{formation_dict[id]}: {survived} missiles surviving with {percentage} confidence"
+            answer = f"{formation_dict[id]}: {survived} missiles will survive with {percentage} confidence"
             answers.append(answer)
+
         return '\n'.join(answers)

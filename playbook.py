@@ -1,20 +1,14 @@
 from bayes import Oracle
 
-missiles = input("Enter the number of missiles:\n")
-turrets = input("Enter the number of turrets: \n")
+num_missiles = 0
+while num_missiles < 2 or num_missiles > 5:
+    num_missiles = int(input("Enter the number of missiles (2 to 5):\n"))
+    
+num_turrets = 0
+while num_turrets < 1 or num_turrets > 4:
+    num_turrets = int(input("Enter the number of turrets (1 to 4): \n"))
+
 file = 'Missile All.csv'
 oracle = Oracle(file)
 
-print(f"Given {missiles} missiles and {turrets} turrets:\n")
-
-print(oracle.get_answers(missiles, turrets))
-# # Use known statistics from Supervised Learning models
-# if missiles == 3 and turrets == 4: # TODO pull from bayes model
-#     print("V3: 2 missiles surviving with 39% Confidence")
-#     print("Ant3: 3 missiles surviving with 20% Confidence")
-#     print("Marching3: 2 missiles surviving with 35% Confidence")
-#     print("You must choose...wisely")
-# elif missiles == 4 and turrets == 2:  # TODO refine
-#     print("Use that formation")
-# else:
-#     print("Unknown answer")
+print('\n' + oracle.get_answers(num_missiles, num_turrets))
