@@ -2,37 +2,39 @@ from sklearn.model_selection import train_test_split
 import pandas as pd
 from sklearn.naive_bayes import GaussianNB
 from sklearn import metrics
+import formations as formations
 
-df = pd.read_csv('Missile All.csv')
-opt = [5]
-flt_df = df[df["Missile Count"].isin(opt)]
-#print(df)
+class Oracle():
+    def __init__(self, filename : str):
+        self.df = pd.read_csv(filename)
+    
+    def get_answers(self, n_missiles : int, n_turrets : int) -> str :
+        flt_df = self.df[self.df["Missile Count"].isin([n_missiles])]
+        features = flt_df[["Missile Count", "Formation Used", "Turret Count"]]
+        label = flt_df.pop("Missiles Survived")
 
-features = flt_df[["Missile Count","Formation Used", "Turret Count"]]
-label = flt_df.pop("Missiles Survived")
+        # Split Data
+        X_train, _, y_train, _ = train_test_split(features, label, test_size=0)
 
-# Split Data
-X_train, X_test, y_train, y_test = train_test_split(features, label, test_size=0.3)
-#print ("X Train:", X_train)
-#print ("Y Train:", y_train)
-#print ("X Test:", X_test)
-#print ("Y Test:", y_test)
+        # Create Classifier
+        gnb = GaussianNB()
 
-# Create Classifier
-gnb = GaussianNB()
+        # Train model
+        gnb.fit(X_train, y_train)
 
-# Train model
-gnb.fit(X_train, y_train)
-
-# Predict missile survivability
-y_pred = gnb.predict(X_test)
-
-def oracle(gnb : GaussianNB, n_missiles : int, n_turrets : int) -> str :
-    # GNB Predictions
-    print(gnb.classes_)
-    predicted = gnb.predict_proba([[5,10,3]])
-    print("The gods tell me", predicted, "missiles will survive")
-
-    #n = 8.99284722486562e-02 
-    #converted_number = float(("%.17f" % n).rstrip('0').rstrip('.'))
-    #print(round(converted_number*100,2),"%")
+        # Determine which formations are in the data
+        valid_formations = [c for c in formations if isinstance(c, formations.Basic_Formation)]
+        formation_dict = {f.id : str(f) for f in valid_formations}
+        formation_ids = flt_df["Formation Used"].unique()
+        answers = []
+        for id in formation_ids:
+            # Find highest confidence class
+            survived = int(gnb.predict([[n_missiles, id, n_turrets]]))
+            # Find confidence of that class
+            predicted = float(gnb.predict_proba([[n_missiles, id, n_turrets], survived]))
+            # Convert confidence to percentage
+            percentage = str(round(float(("%.17f" % predicted).rstrip('0').rstrip('.')) * 100, 2)) + "%"
+            # Collect answer
+            answer = f"{formation_dict[id]}: {survived} missiles surviving with {percentage} confidence"
+            answers.append(answer)
+        return '\n'.join(answers)
